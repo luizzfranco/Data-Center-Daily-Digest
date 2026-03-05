@@ -19,6 +19,7 @@ def get_article_content(page, url):
 
 def get_yesterday_articles():
     yesterday = date.today() - timedelta(days=1)
+    print(f"  Buscando notícias de {yesterday.strftime('%d/%m/%Y')}...")
     articles = []
 
     with sync_playwright() as p:
@@ -51,20 +52,6 @@ def get_yesterday_articles():
 
             print(f"  {len(cards)} card(s) encontrado(s)")
 
-            # DEBUG: print date info from first 5 cards
-            print("  --- DEBUG: primeiros 5 cards ---")
-            for i, card in enumerate(cards[:31]):
-                time_tag = card.query_selector("time")
-                if time_tag:
-                    dt = time_tag.get_attribute("datetime")
-                    txt = time_tag.inner_text()
-                    print(f"  Card {i+1}: datetime='{dt}' text='{txt}'")
-                else:
-                    # Try to find any date-like element
-                    html = card.inner_html()[:300]
-                    print(f"  Card {i+1}: sem <time>. HTML parcial: {html}")
-            print("  --- FIM DEBUG ---")
-
             found_older = False
             for card in cards:
                 time_tag = card.query_selector("time")
@@ -78,10 +65,12 @@ def get_yesterday_articles():
                         except Exception:
                             pass
 
+                # Stop paginating once we hit articles older than yesterday
                 if article_date and article_date < yesterday:
                     found_older = True
                     break
 
+                # Only collect articles from yesterday (skip today's and undated)
                 if article_date != yesterday:
                     continue
 
@@ -104,6 +93,7 @@ def get_yesterday_articles():
                 if any(a["url"] == full_url for a in articles):
                     continue
 
+                print(f"  ✓ Encontrado: {title[:60]}")
                 articles.append({
                     "title": title,
                     "url": full_url,
@@ -115,7 +105,9 @@ def get_yesterday_articles():
 
             time.sleep(2)
 
-        print(f"  Buscando conteúdo completo de {len(articles)} artigo(s)...")
+        print(f"  Total: {len(articles)} artigo(s) de ontem encontrado(s).")
+
+        print(f"  Buscando conteúdo completo...")
         for i, article in enumerate(articles):
             print(f"  [{i+1}/{len(articles)}] {article['title'][:60]}...")
             article["content"] = get_article_content(page, article["url"])
