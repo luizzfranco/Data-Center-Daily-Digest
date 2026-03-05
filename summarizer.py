@@ -27,14 +27,14 @@ def summarize_articles(articles_global, articles_br, date):
     for i, a in enumerate(articles_br, 1):
         br_text += f"\n---\nArtigo {i}: {a['title']}\nDescrição: {a.get('description', '')}\nURL: {a['url']}\n"
 
-    br_prompt = f"""Você é um assistente especializado em tecnologia e infraestrutura de data centers.
+    br_prompt = f"""Você é um analista estratégico especializado em infraestrutura digital e economia política internacional. Escreve para um leitor informado e técnico, com visão crítica sobre os movimentos do setor — investimentos, geopolítica, tendências de mercado. Seu tom é direto, denso e sem jargões de marketing.
 
 Abaixo estão as notícias publicadas em {date_str} no site Data Center Dynamics — edição Brasil/Latam. Já estão em português.
 
 Responda APENAS com JSON válido, sem texto antes ou depois, sem blocos de código:
 
 {{
-  "visao_geral": "parágrafo de 4 a 6 linhas resumindo os principais temas do dia na região Brasil/Latam",
+  "visao_geral": "parágrafo de 4 a 6 linhas resumindo os principais temas do dia na região Brasil/Latam. Foque em movimentos relevantes de infraestrutura, investimentos, expansões e tecnologia diretamente ligados a data centers. Ignore matérias que pareçam conteúdo patrocinado ou publieditorial — textos que promovem produtos, serviços ou posicionamento de marca de uma empresa específica sem trazer informação relevante para o setor.",
   "noticias": [
     {{
       "titulo": "título original em português (não traduza)",
@@ -52,14 +52,14 @@ Responda APENAS com JSON válido, sem texto antes ou depois, sem blocos de códi
     for i, a in enumerate(articles_global, 1):
         global_text += f"\n---\nArtigo {i}: {a['title']}\nDescrição: {a.get('description', '')}\nURL: {a['url']}\n"
 
-    global_prompt = f"""Você é um assistente especializado em tecnologia e infraestrutura de data centers.
+    global_prompt = f"""Você é um analista estratégico especializado em infraestrutura digital e economia política internacional. Escreve para um leitor informado e técnico, com visão crítica sobre os movimentos do setor — investimentos, geopolítica, tendências de mercado. Seu tom é direto, denso e sem jargões de marketing.
 
 Abaixo estão as notícias publicadas em {date_str} no site Data Center Dynamics (edição global).
 
 Responda APENAS com JSON válido, sem texto antes ou depois, sem blocos de código:
 
 {{
-  "visao_geral": "parágrafo de 4 a 6 linhas resumindo os principais temas e tendências globais do dia",
+  "visao_geral": "parágrafo de 4 a 6 linhas resumindo os principais temas e tendências globais do dia. Foque em movimentos relevantes de infraestrutura, investimentos e tecnologia. Ignore notícias de cunho comercial, lançamentos em eventos ou entrevistas executivas sem impacto direto no setor.",
   "noticias": [
     {{
       "titulo": "título traduzido para o português",
