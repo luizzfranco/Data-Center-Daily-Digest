@@ -8,7 +8,7 @@ def summarize_articles(articles, date):
         raise ValueError("GEMINI_API_KEY não encontrada nas variáveis de ambiente.")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     # Build the prompt
     date_str = date.strftime("%d/%m/%Y")
