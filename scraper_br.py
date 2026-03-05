@@ -18,6 +18,23 @@ def goto_with_retry(page, url, retries=3, timeout=90000):
     return False
 
 
+def get_article_tags(page, url):
+    try:
+        if not goto_with_retry(page, url):
+            return []
+        time.sleep(2)
+        tag_elements = page.query_selector_all("a[href*='/br/tags/'], a[href*='/en/tags/']")
+        tags = []
+        for el in tag_elements:
+            text = el.inner_text().strip()
+            if text and text not in tags:
+                tags.append(text)
+        return tags
+    except Exception as e:
+        print(f"  [BR] Erro ao coletar tags de {url}: {e}")
+        return []
+
+
 def get_yesterday_articles_br(target_date=None):
     yesterday = target_date if target_date else date.today() - timedelta(days=1)
     print(f"  [BR] Buscando notícias de {yesterday.strftime('%d/%m/%Y')}...")
@@ -86,12 +103,22 @@ def get_yesterday_articles_br(target_date=None):
                     continue
 
                 print(f"  [BR] ✓ {title[:70]}")
+
+                # Collect tags from article page
+                tags = get_article_tags(page, full_url)
+                print(f"  [BR] Tags: {tags}")
+
+                # Go back to listing page
+                goto_with_retry(page, url)
+                time.sleep(2)
+
                 articles.append({
                     "title": title,
                     "url": full_url,
                     "date": str(article_date),
                     "description": "",
                     "content": "",
+                    "tags": tags,
                 })
 
             # Stop if the newest article on this page is older than yesterday
