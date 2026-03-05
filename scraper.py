@@ -65,52 +65,22 @@ def get_yesterday_articles():
                         except Exception:
                             pass
 
-                # Stop paginating once we hit articles older than yesterday
                 if article_date and article_date < yesterday:
                     found_older = True
                     break
 
-                # Only collect articles from yesterday (skip today's and undated)
                 if article_date != yesterday:
                     continue
 
-                link_tag = card.query_selector("a[href]")
-                if not link_tag:
-                    continue
-
-                href = link_tag.get_attribute("href")
-                if not href:
-                    continue
-
-                full_url = href if href.startswith("http") else BASE_URL + href
-
-                if "/en/news/" not in full_url and "/en/analysis/" not in full_url:
-                    continue
-
-                title_tag = card.query_selector("h2, h3, h4")
-                title = title_tag.inner_text().strip() if title_tag else link_tag.inner_text().strip()
-
-                if any(a["url"] == full_url for a in articles):
-                    continue
-
-                print(f"  ✓ Encontrado: {title[:60]}")
-                articles.append({
-                    "title": title,
-                    "url": full_url,
-                    "date": str(article_date),
-                })
+                # DEBUG: show all links inside this card
+                all_links = card.query_selector_all("a[href]")
+                for lnk in all_links:
+                    print(f"  DEBUG link: {lnk.get_attribute('href')}")
 
             if found_older:
+                print("  (encontrou artigo mais antigo, parando paginação)")
                 break
 
-            time.sleep(2)
-
-        print(f"  Total: {len(articles)} artigo(s) de ontem encontrado(s).")
-
-        print(f"  Buscando conteúdo completo...")
-        for i, article in enumerate(articles):
-            print(f"  [{i+1}/{len(articles)}] {article['title'][:60]}...")
-            article["content"] = get_article_content(page, article["url"])
             time.sleep(2)
 
         browser.close()
