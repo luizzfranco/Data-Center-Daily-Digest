@@ -23,7 +23,7 @@ def get_article_tags(page, url):
         if not goto_with_retry(page, url):
             return []
         time.sleep(2)
-        tag_elements = page.query_selector_all("a[href*='/en/tags/'], a[href*='/br/tags/']")
+        tag_elements = page.query_selector_all("a.tag")
         tags = []
         for el in tag_elements:
             text = el.inner_text().strip()
