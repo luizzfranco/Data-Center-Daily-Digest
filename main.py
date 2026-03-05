@@ -3,6 +3,7 @@ from scraper import get_yesterday_articles
 from scraper_br import get_yesterday_articles_br
 from summarizer import summarize_articles
 from mailer import send_digest
+from sheets import save_to_sheets
 from datetime import date, timedelta, datetime
 
 
@@ -27,6 +28,9 @@ def main():
     print("Enviando e-mail...")
     send_digest(digest, target_date)
     print("E-mail enviado com sucesso!")
+
+    print("Salvando no Google Sheets...")
+    save_to_sheets(articles_br, articles_global, digest)
 
 
 if __name__ == "__main__":
