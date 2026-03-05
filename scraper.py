@@ -18,6 +18,23 @@ def goto_with_retry(page, url, retries=3, timeout=90000):
     return False
 
 
+def get_article_tags(page, url):
+    try:
+        if not goto_with_retry(page, url):
+            return []
+        time.sleep(2)
+        tag_elements = page.query_selector_all("a[href*='/en/tags/'], a[href*='/br/tags/']")
+        tags = []
+        for el in tag_elements:
+            text = el.inner_text().strip()
+            if text and text not in tags:
+                tags.append(text)
+        return tags
+    except Exception as e:
+        print(f"  Erro ao coletar tags de {url}: {e}")
+        return []
+
+
 def get_yesterday_articles(target_date=None):
     yesterday = target_date if target_date else date.today() - timedelta(days=1)
     print(f"  Buscando notícias de {yesterday.strftime('%d/%m/%Y')}...")
@@ -63,7 +80,6 @@ def get_yesterday_articles(target_date=None):
                         except Exception:
                             pass
 
-                # Track oldest date seen on this page
                 if article_date:
                     if oldest_date_on_page is None or article_date < oldest_date_on_page:
                         oldest_date_on_page = article_date
@@ -93,19 +109,24 @@ def get_yesterday_articles(target_date=None):
                     continue
 
                 print(f"  ✓ {title[:70]}")
+
+                # Collect tags from article page
+                tags = get_article_tags(page, full_url)
+                print(f"  Tags: {tags}")
+
+                # Go back to listing page
+                goto_with_retry(page, url)
+                time.sleep(2)
+
                 articles.append({
                     "title": title,
                     "url": full_url,
                     "date": str(article_date),
                     "description": "",
                     "content": "",
+                    "tags": tags,
                 })
 
-            # Stop only if the NEWEST article on this page is older than yesterday
-            if oldest_date_on_page and oldest_date_on_page < yesterday:
-                # There are old articles, but check if there are also recent ones
-                pass  # we already collected what we needed above
-            # Only stop if the whole page is older than yesterday
             all_dates = []
             for card2 in page.query_selector_all("article"):
                 t2 = card2.query_selector("time")
