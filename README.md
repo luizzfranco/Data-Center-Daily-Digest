@@ -1,6 +1,6 @@
-# 📡 DCD Daily Digest
+# 📡 Data Center Daily Digest
 
-Resumo diário automático das notícias do [Data Center Dynamics](https://www.datacenterdynamics.com), gerado por IA (Google Gemini) e enviado por e-mail todo dia de manhã.
+Resumo diário automático de notícias sobre Data Centers, gerado pelo Google Gemini e enviado por e-mail todo dia de manhã.
 
 ---
 
