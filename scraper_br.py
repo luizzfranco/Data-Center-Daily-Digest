@@ -67,6 +67,10 @@ def get_yesterday_articles_br(target_date=None):
             cards = page.query_selector_all("article")
             print(f"  [BR] {len(cards)} card(s) encontrado(s)")
 
+            # Collect all article data from this page first (no navigation)
+            page_articles = []
+            all_dates = []
+
             for card in cards:
                 time_tag = card.query_selector("time")
                 article_date = None
@@ -77,6 +81,9 @@ def get_yesterday_articles_br(target_date=None):
                             article_date = datetime.strptime(raw[:10], "%Y-%m-%d").date()
                         except Exception:
                             pass
+
+                if article_date:
+                    all_dates.append(article_date)
 
                 if article_date != yesterday:
                     continue
@@ -99,38 +106,29 @@ def get_yesterday_articles_br(target_date=None):
 
                 if not title or title.lower().startswith("sponsored") or title.lower().startswith("patrocinado"):
                     continue
-                if any(a["url"] == full_url for a in articles):
+                if any(a["url"] == full_url for a in articles) or any(a["url"] == full_url for a in page_articles):
                     continue
 
                 print(f"  [BR] ✓ {title[:70]}")
-
-                # Collect tags from article page
-                tags = get_article_tags(page, full_url)
-                print(f"  [BR] Tags: {tags}")
-
-                # Go back to listing page
-                goto_with_retry(page, url)
-                time.sleep(2)
-
-                articles.append({
+                page_articles.append({
                     "title": title,
                     "url": full_url,
                     "date": str(article_date),
                     "description": "",
                     "content": "",
-                    "tags": tags,
+                    "tags": [],
                 })
 
+            # Now fetch tags for each article (navigation happens here, after iteration)
+            for article in page_articles:
+                tags = get_article_tags(page, article["url"])
+                article["tags"] = tags
+                print(f"  [BR] Tags de '{article['title'][:40]}': {tags}")
+                time.sleep(1)
+
+            articles.extend(page_articles)
+
             # Stop if the newest article on this page is older than yesterday
-            all_dates = []
-            for card2 in page.query_selector_all("article"):
-                t2 = card2.query_selector("time")
-                if t2 and t2.get_attribute("datetime"):
-                    try:
-                        d2 = datetime.strptime(t2.get_attribute("datetime")[:10], "%Y-%m-%d").date()
-                        all_dates.append(d2)
-                    except Exception:
-                        pass
             if all_dates and max(all_dates) < yesterday:
                 print(f"  [BR] Página {page_num} não tem artigos de ontem. Parando.")
                 break
