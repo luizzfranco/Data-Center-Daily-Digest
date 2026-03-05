@@ -1,10 +1,9 @@
-name: DCD Daily Digest
+name: Data Center Daily Digest
 
 on:
   schedule:
-    # Roda todo dia às 10:00 UTC = 07:00 Brasília (horário de verão) / 07:00 BRT
     - cron: "0 10 * * *"
-  workflow_dispatch:  # permite rodar manualmente pelo GitHub para testar
+  workflow_dispatch:
 
 jobs:
   send-digest:
@@ -21,6 +20,9 @@ jobs:
 
       - name: Instalar dependências
         run: pip install -r requirements.txt
+
+      - name: Instalar navegador Playwright
+        run: playwright install chromium --with-deps
 
       - name: Executar digest
         env:
