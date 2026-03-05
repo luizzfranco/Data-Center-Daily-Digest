@@ -38,7 +38,7 @@ def get_yesterday_articles_br(target_date=None):
         stealth_sync(page)
 
         for page_num in range(1, 6):
-            url = BASE_URL + "/br/news/" if page_num == 1 else f"{BASE_URL}/br/news/?page={page_num}"
+            url = BASE_URL + "/br/notícias/" if page_num == 1 else f"{BASE_URL}/br/notícias/?page={page_num}"
             print(f"  [BR] Verificando página {page_num}...")
 
             if not goto_with_retry(page, url):
