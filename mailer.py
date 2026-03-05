@@ -1,16 +1,25 @@
 import os
 import smtplib
-import markdown
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def markdown_to_html(text):
-    """Converts markdown text to HTML with basic styling."""
-    html_body = markdown.markdown(text, extensions=["extra"])
+def build_html(digest, date):
+    date_str = date.strftime("%d/%m/%Y")
+    visao_geral = digest.get("visao_geral", "")
+    noticias = digest.get("noticias", [])
 
-    return f"""
-<!DOCTYPE html>
+    noticias_html = ""
+    for n in noticias:
+        noticias_html += f"""
+        <div class="article">
+            <div class="article-title">{n['titulo']}</div>
+            <div class="article-summary">{n['resumo']}</div>
+            <div class="article-link"><a href="{n['url']}">🔗 Ler artigo completo</a></div>
+        </div>
+        """
+
+    return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -39,7 +48,6 @@ def markdown_to_html(text):
       margin: 0;
       font-size: 20px;
       font-weight: 600;
-      letter-spacing: 0.5px;
     }}
     .header p {{
       margin: 4px 0 0;
@@ -48,27 +56,48 @@ def markdown_to_html(text):
     }}
     .content {{
       padding: 28px 32px;
+    }}
+    .overview {{
+      background: #f8f9fa;
+      border-left: 4px solid #1a1a2e;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      border-radius: 0 6px 6px 0;
+      font-size: 14px;
       line-height: 1.7;
     }}
-    h2 {{
+    .overview-label {{
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       color: #1a1a2e;
-      border-bottom: 2px solid #e8e8e8;
-      padding-bottom: 6px;
-      margin-top: 28px;
-      font-size: 16px;
+      margin-bottom: 8px;
     }}
-    h3 {{
-      color: #333;
+    .article {{
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
+    }}
+    .article:last-child {{
+      border-bottom: none;
+    }}
+    .article-title {{
+      font-weight: 700;
       font-size: 15px;
-      margin-top: 24px;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+      line-height: 1.4;
     }}
-    p {{ margin: 8px 0; font-size: 14px; }}
-    a {{ color: #0066cc; text-decoration: none; }}
-    a:hover {{ text-decoration: underline; }}
-    hr {{
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 20px 0;
+    .article-summary {{
+      font-size: 14px;
+      color: #444;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }}
+    .article-link a {{
+      font-size: 13px;
+      color: #0066cc;
+      text-decoration: none;
     }}
     .footer {{
       background: #f9f9f9;
@@ -84,43 +113,41 @@ def markdown_to_html(text):
   <div class="container">
     <div class="header">
       <h1>📡 Data Center Daily Digest</h1>
-      <p>Resumo diário — Data Center Dynamics</p>
+      <p>Resumo diário — {date_str}</p>
     </div>
     <div class="content">
-      {html_body}
+      <div class="overview">
+        <div class="overview-label">Visão geral do dia</div>
+        {visao_geral}
+      </div>
+      {noticias_html}
     </div>
     <div class="footer">
-      Gerado automaticamente via GitHub Actions + Google Gemini · 
+      Gerado automaticamente via GitHub Actions · 
       <a href="https://www.datacenterdynamics.com">datacenterdynamics.com</a>
     </div>
   </div>
 </body>
-</html>
-"""
+</html>"""
 
 
-def send_digest(digest_text, date):
-    """Sends the digest as a formatted HTML email via Gmail SMTP."""
+def send_digest(digest, date):
     gmail_user = os.environ.get("GMAIL_USER")
     gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
     recipient = os.environ.get("RECIPIENT_EMAIL")
 
     if not all([gmail_user, gmail_password, recipient]):
-        raise ValueError("Variáveis de e-mail não configuradas: GMAIL_USER, GMAIL_APP_PASSWORD, RECIPIENT_EMAIL")
+        raise ValueError("Variáveis de e-mail não configuradas.")
 
     date_str = date.strftime("%d/%m/%Y")
-    subject = f"📡 DCD Digest — {date_str}"
+    subject = f"📡 Data Center Daily Digest — {date_str}"
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = gmail_user
     msg["To"] = recipient
 
-    # Plain text fallback
-    msg.attach(MIMEText(digest_text, "plain", "utf-8"))
-
-    # HTML version
-    html_content = markdown_to_html(digest_text)
+    html_content = build_html(digest, date)
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
