@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import time
 
 BASE_URL = "https://www.datacenterdynamics.com"
@@ -19,7 +19,6 @@ def goto_with_retry(page, url, retries=3, timeout=90000):
 
 
 def get_yesterday_articles(target_date=None):
-    from datetime import date, timedelta
     yesterday = target_date if target_date else date.today() - timedelta(days=1)
     print(f"  Buscando notícias de {yesterday.strftime('%d/%m/%Y')}...")
     articles = []
@@ -51,7 +50,8 @@ def get_yesterday_articles(target_date=None):
             cards = page.query_selector_all("article")
             print(f"  {len(cards)} card(s) encontrado(s)")
 
-            found_older = False
+            oldest_date_on_page = None
+
             for card in cards:
                 time_tag = card.query_selector("time")
                 article_date = None
@@ -59,14 +59,14 @@ def get_yesterday_articles(target_date=None):
                     raw = time_tag.get_attribute("datetime")
                     if raw:
                         try:
-                            from datetime import datetime
                             article_date = datetime.strptime(raw[:10], "%Y-%m-%d").date()
                         except Exception:
                             pass
 
-                if article_date and article_date < yesterday:
-                    found_older = True
-                    break
+                # Track oldest date seen on this page
+                if article_date:
+                    if oldest_date_on_page is None or article_date < oldest_date_on_page:
+                        oldest_date_on_page = article_date
 
                 if article_date != yesterday:
                     continue
@@ -101,7 +101,9 @@ def get_yesterday_articles(target_date=None):
                     "content": "",
                 })
 
-            if found_older:
+            # Only stop paginating if this page has no articles from yesterday or newer
+            if oldest_date_on_page and oldest_date_on_page < yesterday:
+                print(f"  Página {page_num} só tem artigos mais antigos que ontem. Parando.")
                 break
 
             time.sleep(2)
