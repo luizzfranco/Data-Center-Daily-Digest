@@ -1,4 +1,5 @@
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 from datetime import date, timedelta
 import time
 
@@ -7,7 +8,7 @@ BASE_URL = "https://www.datacenterdynamics.com"
 
 def get_article_content(page, url):
     try:
-        page.goto(url, timeout=30000, wait_until="domcontentloaded")
+        page.goto(url, timeout=90000, wait_until="domcontentloaded")
         time.sleep(2)
         paragraphs = page.query_selector_all("article p")
         text = " ".join(p.inner_text() for p in paragraphs)
@@ -15,6 +16,18 @@ def get_article_content(page, url):
     except Exception as e:
         print(f"  Erro ao buscar conteúdo de {url}: {e}")
         return ""
+
+
+def goto_with_retry(page, url, retries=3, timeout=90000):
+    for attempt in range(1, retries + 1):
+        try:
+            page.goto(url, timeout=timeout, wait_until="domcontentloaded")
+            return True
+        except Exception as e:
+            print(f"  Tentativa {attempt}/{retries} falhou para {url}: {e}")
+            if attempt < retries:
+                time.sleep(5)
+    return False
 
 
 def get_yesterday_articles():
@@ -34,17 +47,18 @@ def get_yesterday_articles():
             locale="en-US",
         )
         page = context.new_page()
+        stealth_sync(page)
 
         for page_num in range(1, 4):
             url = BASE_URL + "/en/news/" if page_num == 1 else f"{BASE_URL}/en/news/?page={page_num}"
             print(f"  Verificando página {page_num}: {url}")
 
-            try:
-                page.goto(url, timeout=30000, wait_until="domcontentloaded")
-                time.sleep(3)
-            except Exception as e:
-                print(f"  Erro ao acessar {url}: {e}")
-                break
+            success = goto_with_retry(page, url)
+            if not success:
+                print(f"  Não foi possível acessar {url} após 3 tentativas. Pulando.")
+                continue
+
+            time.sleep(3)
 
             cards = page.query_selector_all("article")
             if not cards:
@@ -64,7 +78,6 @@ def get_yesterday_articles():
                         except Exception:
                             pass
 
-                # Only collect articles from yesterday
                 if article_date != yesterday:
                     continue
 
@@ -78,11 +91,9 @@ def get_yesterday_articles():
 
                 full_url = href if href.startswith("http") else BASE_URL + href
 
-                # Accept any article path (not just /en/news/)
                 if not full_url.startswith(BASE_URL + "/en/"):
                     continue
 
-                # Skip pagination links and index pages
                 if full_url.rstrip("/") in [BASE_URL + "/en/news", BASE_URL + "/en/analysis"]:
                     continue
 
