@@ -101,9 +101,22 @@ def get_yesterday_articles(target_date=None):
                     "content": "",
                 })
 
-            # Only stop paginating if this page has no articles from yesterday or newer
+            # Stop only if the NEWEST article on this page is older than yesterday
             if oldest_date_on_page and oldest_date_on_page < yesterday:
-                print(f"  Página {page_num} só tem artigos mais antigos que ontem. Parando.")
+                # There are old articles, but check if there are also recent ones
+                pass  # we already collected what we needed above
+            # Only stop if the whole page is older than yesterday
+            all_dates = []
+            for card2 in page.query_selector_all("article"):
+                t2 = card2.query_selector("time")
+                if t2 and t2.get_attribute("datetime"):
+                    try:
+                        d2 = datetime.strptime(t2.get_attribute("datetime")[:10], "%Y-%m-%d").date()
+                        all_dates.append(d2)
+                    except:
+                        pass
+            if all_dates and max(all_dates) < yesterday:
+                print(f"  Página {page_num} não tem artigos de ontem ou mais recentes. Parando.")
                 break
 
             time.sleep(2)
