@@ -9,7 +9,7 @@ def summarize_articles(articles, date):
         raise ValueError("GEMINI_API_KEY não encontrada nas variáveis de ambiente.")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-06-17")
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
     date_str = date.strftime("%d/%m/%Y")
     articles_text = ""
