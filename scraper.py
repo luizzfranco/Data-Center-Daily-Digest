@@ -6,11 +6,9 @@ BASE_URL = "https://www.datacenterdynamics.com"
 
 
 def get_article_content(page, url):
-    """Fetches the full text content of a single article."""
     try:
         page.goto(url, timeout=30000, wait_until="domcontentloaded")
         time.sleep(2)
-
         paragraphs = page.query_selector_all("article p")
         text = " ".join(p.inner_text() for p in paragraphs)
         return text[:4000]
@@ -20,7 +18,6 @@ def get_article_content(page, url):
 
 
 def get_yesterday_articles():
-    """Scrapes DCD news page using Playwright and returns articles from yesterday."""
     yesterday = date.today() - timedelta(days=1)
     articles = []
 
@@ -53,6 +50,20 @@ def get_yesterday_articles():
                 cards = page.query_selector_all("[class*='ArticleCard'], [class*='article-card'], [class*='card']")
 
             print(f"  {len(cards)} card(s) encontrado(s)")
+
+            # DEBUG: print date info from first 5 cards
+            print("  --- DEBUG: primeiros 5 cards ---")
+            for i, card in enumerate(cards[:5]):
+                time_tag = card.query_selector("time")
+                if time_tag:
+                    dt = time_tag.get_attribute("datetime")
+                    txt = time_tag.inner_text()
+                    print(f"  Card {i+1}: datetime='{dt}' text='{txt}'")
+                else:
+                    # Try to find any date-like element
+                    html = card.inner_html()[:300]
+                    print(f"  Card {i+1}: sem <time>. HTML parcial: {html}")
+            print("  --- FIM DEBUG ---")
 
             found_older = False
             for card in cards:
