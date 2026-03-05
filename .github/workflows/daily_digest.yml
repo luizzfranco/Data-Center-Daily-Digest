@@ -7,7 +7,7 @@ on:
 
 jobs:
   send-digest:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout do repositório
@@ -20,9 +20,6 @@ jobs:
 
       - name: Instalar dependências
         run: pip install -r requirements.txt
-
-      - name: Instalar navegador Playwright
-        run: playwright install chromium --with-deps
 
       - name: Executar digest
         env:
