@@ -53,7 +53,7 @@ def get_yesterday_articles():
 
             # DEBUG: print date info from first 5 cards
             print("  --- DEBUG: primeiros 5 cards ---")
-            for i, card in enumerate(cards[:5]):
+            for i, card in enumerate(cards[:31]):
                 time_tag = card.query_selector("time")
                 if time_tag:
                     dt = time_tag.get_attribute("datetime")
