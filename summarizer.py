@@ -1,6 +1,7 @@
 import os
 import google.generativeai as genai
 
+
 def summarize_articles(articles, date):
     """Uses Gemini to generate an overview + per-article summaries in Portuguese."""
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -10,16 +11,10 @@ def summarize_articles(articles, date):
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-2.0-flash")
 
-    # Build the prompt
     date_str = date.strftime("%d/%m/%Y")
     articles_text = ""
     for i, a in enumerate(articles, 1):
-        articles_text += f"""
----
-Artigo {i}: {a['title']}
-URL: {a['url']}
-Conteúdo: {a['content'] or '(conteúdo não disponível)'}
-"""
+        articles_text += f"\n---\nArtigo {i}: {a['title']}\nDescrição: {a['description']}\nURL: {a['url']}\n"
 
     prompt = f"""Você é um assistente especializado em tecnologia e infraestrutura de data centers.
 
@@ -31,7 +26,7 @@ Sua tarefa é produzir um digest em PORTUGUÊS BRASILEIRO com:
 
 2. **RESUMO POR NOTÍCIA** — Para cada artigo, escreva:
    - O título original
-   - Um resumo de 3 a 5 linhas em português
+   - Um resumo de 2 a 3 linhas em português
    - O link original
 
 Seja claro, objetivo e informativo. Não inclua opiniões. Use linguagem profissional.
