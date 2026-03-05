@@ -26,15 +26,17 @@ Produza um digest em PORTUGUÊS BRASILEIRO com este formato exato:
 
 ---
 
-[Para cada notícia, use exatamente este formato:]
+[Para cada notícia, use exatamente este formato, com uma linha em branco entre cada campo:]
 
 **[Título traduzido para o português]**
+
 [Resumo de 2 a 3 linhas em português]
-[URL original]
+
+Link: [URL original]
 
 ---
 
-Sem títulos de seção como "Resumo por notícia". Sem rótulos como "Título:", "Resumo:", "Link:". Direto ao ponto. Linguagem profissional e objetiva.
+Sem rótulos como "Título:", "Resumo:". Linguagem profissional e objetiva.
 
 {articles_text}
 """
