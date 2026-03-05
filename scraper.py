@@ -23,13 +23,13 @@ def get_article_tags(page, url):
         if not goto_with_retry(page, url):
             return []
         time.sleep(2)
-        tag_elements = page.query_selector_all("a.tag")
-        tags = []
-        for el in tag_elements:
-            text = el.inner_text().strip()
-            if text and text not in tags:
-                tags.append(text)
-        return tags
+        meta = page.query_selector('meta[itemprop="keywords"]')
+        if not meta:
+            return []
+        content = meta.get_attribute("content")
+        if not content:
+            return []
+        return [t.strip() for t in content.split(",") if t.strip()]
     except Exception as e:
         print(f"  Erro ao coletar tags de {url}: {e}")
         return []
