@@ -83,7 +83,7 @@ def markdown_to_html(text):
 <body>
   <div class="container">
     <div class="header">
-      <h1>📡 DCD Daily Digest</h1>
+      <h1>📡 Data Center Daily Digest</h1>
       <p>Resumo diário — Data Center Dynamics</p>
     </div>
     <div class="content">
