@@ -1,9 +1,33 @@
 import sys
 from scraper import get_yesterday_articles
 from scraper_br import get_yesterday_articles_br
-from summarizer import summarize_articles
+from tagger import tag_articles
 from mailer import send_digest
+from sheets import save_to_sheets
 from datetime import date, timedelta, datetime
+
+
+def build_digest(articles_br, articles_global):
+    """Monta a estrutura esperada pelo mailer a partir dos artigos tagueados."""
+    digest = {}
+
+    if articles_br:
+        digest["br"] = [
+            {"titulo": a["title"], "url": a["url"]}
+            for a in articles_br
+        ]
+    else:
+        digest["br"] = None
+
+    if articles_global:
+        digest["global"] = [
+            {"titulo": a.get("title_pt", a["title"]), "url": a["url"]}
+            for a in articles_global
+        ]
+    else:
+        digest["global"] = None
+
+    return digest
 
 
 def main():
@@ -21,12 +45,18 @@ def main():
         print("Nenhuma notícia encontrada. Encerrando.")
         return
 
-    print(f"{len(articles_br)} notícia(s) BR e {len(articles_global)} global(is) encontrada(s). Gerando resumos...")
-    digest = summarize_articles(articles_global, articles_br, target_date)
+    print(f"{len(articles_br)} notícia(s) BR e {len(articles_global)} global(is) encontrada(s). Gerando tags...")
+    articles_br, articles_global = tag_articles(articles_global, articles_br)
+
+    digest = build_digest(articles_br, articles_global)
 
     print("Enviando e-mail...")
     send_digest(digest, target_date)
     print("E-mail enviado com sucesso!")
+
+    print("Salvando no Google Sheets...")
+    save_to_sheets(articles_br, articles_global)
+    print("Concluído.")
 
 
 if __name__ == "__main__":
