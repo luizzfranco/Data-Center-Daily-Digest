@@ -33,7 +33,7 @@ def save_to_sheets(articles_br, articles_global, digest):
         tags = ", ".join(article.get("tags", []))
         resumo = br_summaries.get(article["url"], "")
         rows.append([
-            "/".join(reversed(article["date"].split("-"))),
+            article["date"],
             "BR",
             article["title"],
             article["url"],
@@ -51,7 +51,7 @@ def save_to_sheets(articles_br, articles_global, digest):
         tags = ", ".join(article.get("tags", []))
         resumo = global_summaries.get(article["url"], "")
         rows.append([
-            "/".join(reversed(article["date"].split("-"))),
+            article["date"],
             "Global",
             article["title"],
             article["url"],
