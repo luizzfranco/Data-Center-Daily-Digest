@@ -26,6 +26,7 @@ def get_article_tags(page, url):
         time.sleep(2)
         el = page.query_selector('#dimensions-data')
         if not el:
+            print(f"  [BR] #dimensions-data NÃO encontrado. Title da página: {page.title()}")
             return []
         data = json.loads(el.inner_text())
         keywords = data.get('dimension5', '')
