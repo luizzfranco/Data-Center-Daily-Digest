@@ -13,7 +13,7 @@ def build_digest(articles_br, articles_global):
 
     if articles_br:
         digest["br"] = [
-            {"titulo": a["title"], "url": a["url"], "tags": a.get("tags", [])}
+            {"titulo": a["title"], "url": a["url"]}
             for a in articles_br
         ]
     else:
@@ -21,7 +21,7 @@ def build_digest(articles_br, articles_global):
 
     if articles_global:
         digest["global"] = [
-            {"titulo": a["title"], "url": a["url"], "tags": a.get("tags", [])}
+            {"titulo": a.get("title_pt", a["title"]), "url": a["url"]}
             for a in articles_global
         ]
     else:
