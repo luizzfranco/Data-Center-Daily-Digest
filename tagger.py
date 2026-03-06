@@ -66,7 +66,6 @@ def tag_articles(articles_global, articles_br):
             return [t.strip() for t in raw.split(",") if t.strip()]
         except Exception as e:
             print(f"  [Tagger] Erro ao gerar tags para '{title[:50]}': {e}")
-            request_count += 1
             return []
 
     def translate_titles(articles):
@@ -86,7 +85,6 @@ def tag_articles(articles_global, articles_br):
             return data.get("titulos", [])
         except Exception as e:
             print(f"  [Tagger] Erro ao traduzir títulos: {e}")
-            request_count += 1
             return []
 
     if articles_br:
