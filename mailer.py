@@ -7,15 +7,11 @@ from email.mime.text import MIMEText
 def build_section(noticias):
     html = ""
     for n in noticias:
-        tags_html = ""
-        if n.get("tags"):
-            tags_html = f'<div class="article-tags">{", ".join(n["tags"])}</div>'
         html += f"""
         <div class="article">
             <div class="article-title">
                 {n['titulo']} <a class="article-link-inline" href="{n['url']}">🔗 Link</a>
             </div>
-            {tags_html}
         </div>
         """
     return html
@@ -94,11 +90,6 @@ def build_html(digest, date):
       font-weight: 400;
       white-space: nowrap;
       margin-left: 6px;
-    }}
-    .article-tags {{
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
     }}
     .divider {{ border-top: 2px solid #eee; margin: 28px 0; }}
     .footer {{
