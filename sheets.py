@@ -4,7 +4,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
 SPREADSHEET_ID = "1dq-1f2WBy1zEXM9ZMWQxSwTinrGOk_SPXtqXW8Mc1MQ"
-RANGE = "Sheet1!A:F"
+RANGE = "Sheet1!A:E"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
@@ -17,45 +17,29 @@ def get_sheets_service():
     return build("sheets", "v4", credentials=creds)
 
 
-def save_to_sheets(articles_br, articles_global, digest):
+def save_to_sheets(articles_br, articles_global):
     service = get_sheets_service()
     sheet = service.spreadsheets()
 
     rows = []
 
-    # BR articles
-    br_summaries = {}
-    if digest.get("br") and digest["br"].get("noticias"):
-        for n in digest["br"]["noticias"]:
-            br_summaries[n["url"]] = n.get("resumo", "")
-
     for article in articles_br:
         tags = ", ".join(article.get("tags", []))
-        resumo = br_summaries.get(article["url"], "")
         rows.append([
             article["date"],
             "BR",
             article["title"],
             article["url"],
-            resumo,
             tags,
         ])
 
-    # Global articles
-    global_summaries = {}
-    if digest.get("global") and digest["global"].get("noticias"):
-        for n in digest["global"]["noticias"]:
-            global_summaries[n["url"]] = n.get("resumo", "")
-
     for article in articles_global:
         tags = ", ".join(article.get("tags", []))
-        resumo = global_summaries.get(article["url"], "")
         rows.append([
             article["date"],
             "Global",
             article["title"],
             article["url"],
-            resumo,
             tags,
         ])
 
