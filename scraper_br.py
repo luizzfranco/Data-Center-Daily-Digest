@@ -2,7 +2,6 @@ from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
 from datetime import date, timedelta, datetime
 import time
-import json
 
 BASE_URL = "https://www.datacenterdynamics.com"
 
@@ -17,25 +16,6 @@ def goto_with_retry(page, url, retries=3, timeout=90000, wait_until="domcontentl
             if attempt < retries:
                 time.sleep(5)
     return False
-
-
-def get_article_tags(page, url):
-    try:
-        if not goto_with_retry(page, url, wait_until="load"):
-            return []
-        time.sleep(2)
-        el = page.query_selector('#dimensions-data')
-        if not el:
-            print(f"  [BR] #dimensions-data NÃO encontrado. Title da página: {page.title()}")
-            return []
-        data = json.loads(el.inner_text())
-        keywords = data.get('dimension5', '')
-        if not keywords:
-            return []
-        return [t.strip() for t in keywords.split(',') if t.strip()]
-    except Exception as e:
-        print(f"  [BR] Erro ao coletar tags de {url}: {e}")
-        return []
 
 
 def get_yesterday_articles_br(target_date=None):
@@ -116,16 +96,8 @@ def get_yesterday_articles_br(target_date=None):
                     "title": title,
                     "url": full_url,
                     "date": str(article_date),
-                    "description": "",
-                    "content": "",
                     "tags": [],
                 })
-
-            for article in page_articles:
-                tags = get_article_tags(page, article["url"])
-                article["tags"] = tags
-                print(f"  [BR] Tags de '{article['title'][:40]}': {tags}")
-                time.sleep(1)
 
             articles.extend(page_articles)
 
