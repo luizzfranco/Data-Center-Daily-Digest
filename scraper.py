@@ -2,14 +2,15 @@ from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
 from datetime import date, timedelta, datetime
 import time
+import json
 
 BASE_URL = "https://www.datacenterdynamics.com"
 
 
-def goto_with_retry(page, url, retries=3, timeout=90000):
+def goto_with_retry(page, url, retries=3, timeout=90000, wait_until="domcontentloaded"):
     for attempt in range(1, retries + 1):
         try:
-            page.goto(url, timeout=timeout, wait_until="domcontentloaded")
+            page.goto(url, timeout=timeout, wait_until=wait_until)
             return True
         except Exception as e:
             print(f"  Tentativa {attempt}/{retries} falhou: {e}")
@@ -20,19 +21,17 @@ def goto_with_retry(page, url, retries=3, timeout=90000):
 
 def get_article_tags(page, url):
     try:
-        if not goto_with_retry(page, url):
+        if not goto_with_retry(page, url, wait_until="load"):
             return []
-        try:
-            page.wait_for_selector('meta[itemprop="keywords"]', timeout=10000)
-        except Exception:
-            pass
-        meta = page.query_selector('meta[itemprop="keywords"]')
-        if not meta:
+        time.sleep(2)
+        el = page.query_selector('#dimensions-data')
+        if not el:
             return []
-        content = meta.get_attribute("content")
-        if not content:
+        data = json.loads(el.inner_text())
+        keywords = data.get('dimension5', '')
+        if not keywords:
             return []
-        return [t.strip() for t in content.split(",") if t.strip()]
+        return [t.strip() for t in keywords.split(',') if t.strip()]
     except Exception as e:
         print(f"  Erro ao coletar tags de {url}: {e}")
         return []
@@ -70,7 +69,6 @@ def get_yesterday_articles(target_date=None):
             cards = page.query_selector_all("article")
             print(f"  {len(cards)} card(s) encontrado(s)")
 
-            # Collect all article data from this page first (no navigation)
             page_articles = []
             all_dates = []
 
@@ -122,7 +120,6 @@ def get_yesterday_articles(target_date=None):
                     "tags": [],
                 })
 
-            # Now fetch tags for each article (navigation happens here, after iteration)
             for article in page_articles:
                 tags = get_article_tags(page, article["url"])
                 article["tags"] = tags
