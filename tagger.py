@@ -1,7 +1,7 @@
 import os
 import time
 import json
-import google.generativeai as genai
+from google import genai
 
 PROMPT_TEMPLATE = """Você é um assistente especializado em data centers e infraestrutura digital.
 Dado o título de uma notícia, gere as tags relevantes em letras minúsculas.
@@ -39,7 +39,7 @@ Responda APENAS com um JSON válido no formato {{"titulos": ["tradução 1", "tr
 Títulos:
 {titulos}"""
 
-RATE_LIMIT = 14        # requests por minuto (margem segura abaixo do limite de 15/min do gemini-1.5-flash free tier)
+RATE_LIMIT = 14        # requests por minuto (margem segura abaixo do limite de 15/min)
 RATE_LIMIT_PAUSE = 62  # segundos de pausa ao atingir o limite
 
 
@@ -48,8 +48,8 @@ def tag_articles(articles_global, articles_br):
     if not api_key:
         raise ValueError("GEMINI_API_KEY não encontrada.")
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
+    client = genai.Client(api_key=api_key)
+    model = "gemini-3.1-flash-lite-preview"
 
     request_count = 0
 
@@ -60,7 +60,7 @@ def tag_articles(articles_global, articles_br):
             time.sleep(RATE_LIMIT_PAUSE)
         try:
             prompt = PROMPT_TEMPLATE.format(titulo=title)
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(model=model, contents=prompt)
             raw = response.text.strip()
             request_count += 1
             return [t.strip() for t in raw.split(",") if t.strip()]
@@ -77,7 +77,7 @@ def tag_articles(articles_global, articles_br):
         titulos_raw = "\n".join(f"{i+1}. {a['title']}" for i, a in enumerate(articles))
         try:
             prompt = TRANSLATE_PROMPT.format(titulos=titulos_raw)
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(model=model, contents=prompt)
             raw = response.text.strip()
             if raw.startswith("```"):
                 raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
