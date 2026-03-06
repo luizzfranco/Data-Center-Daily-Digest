@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import google.generativeai as genai
 
 PROMPT_TEMPLATE = """Você é um assistente especializado em data centers e infraestrutura digital.
@@ -31,8 +32,14 @@ Tags: oracle, eua, demissões, ia, data center, investimento, fluxo de caixa
 Título: "{titulo}"
 Tags:"""
 
+TRANSLATE_PROMPT = """Traduza os títulos abaixo para o português brasileiro.
+Preserve nomes próprios de empresas, produtos e siglas.
+Responda APENAS com um JSON válido no formato {{"titulos": ["tradução 1", "tradução 2", ...]}}, sem texto antes ou depois.
 
-RATE_LIMIT = 10        # requests por minuto (free tier)
+Títulos:
+{titulos}"""
+
+RATE_LIMIT = 14        # requests por minuto (margem segura abaixo do limite de 15/min do gemini-1.5-flash free tier)
 RATE_LIMIT_PAUSE = 62  # segundos de pausa ao atingir o limite
 
 
@@ -42,7 +49,7 @@ def tag_articles(articles_global, articles_br):
         raise ValueError("GEMINI_API_KEY não encontrada.")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+    model = genai.GenerativeModel("gemini-3.1-flash-lite")
 
     request_count = 0
 
@@ -62,6 +69,26 @@ def tag_articles(articles_global, articles_br):
             request_count += 1
             return []
 
+    def translate_titles(articles):
+        nonlocal request_count
+        if request_count > 0 and request_count % RATE_LIMIT == 0:
+            print(f"  [Tagger] Rate limit atingido ({RATE_LIMIT} req/min). Aguardando {RATE_LIMIT_PAUSE}s...")
+            time.sleep(RATE_LIMIT_PAUSE)
+        titulos_raw = "\n".join(f"{i+1}. {a['title']}" for i, a in enumerate(articles))
+        try:
+            prompt = TRANSLATE_PROMPT.format(titulos=titulos_raw)
+            response = model.generate_content(prompt)
+            raw = response.text.strip()
+            if raw.startswith("```"):
+                raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+            data = json.loads(raw)
+            request_count += 1
+            return data.get("titulos", [])
+        except Exception as e:
+            print(f"  [Tagger] Erro ao traduzir títulos: {e}")
+            request_count += 1
+            return []
+
     if articles_br:
         print("  Gerando tags BR via Gemini...")
         for article in articles_br:
@@ -70,6 +97,15 @@ def tag_articles(articles_global, articles_br):
             print(f"  [BR] Tags de '{article['title'][:50]}': {tags}")
 
     if articles_global:
+        print("  Traduzindo títulos Global via Gemini...")
+        traducoes = translate_titles(articles_global)
+        for i, article in enumerate(articles_global):
+            if i < len(traducoes) and traducoes[i]:
+                article["title_pt"] = traducoes[i]
+                print(f"  [Global] Tradução: '{traducoes[i][:60]}'")
+            else:
+                article["title_pt"] = article["title"]
+
         print("  Gerando tags Global via Gemini...")
         for article in articles_global:
             tags = get_tags(article["title"])
