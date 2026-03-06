@@ -22,8 +22,11 @@ def get_article_tags(page, url):
     try:
         if not goto_with_retry(page, url):
             return []
-        time.sleep(2)
-        meta = page.query_selector('meta[itemprop="keywords"]')
+        try:
+    page.wait_for_selector('meta[itemprop="keywords"]', timeout=10000)
+except Exception:
+    pass
+meta = page.query_selector('meta[itemprop="keywords"]')
         if not meta:
             return []
         content = meta.get_attribute("content")
